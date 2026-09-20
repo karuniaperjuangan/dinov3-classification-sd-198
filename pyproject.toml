@@ -1,0 +1,29 @@
+[project]
+name = "image-classification"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "accelerate==1.15.0",
+    "datasets>=5.0.1",
+    "gdown==5.2.0",
+    "huggingface-hub>=0.34.0",
+    "matplotlib>=3.11.2",
+    "onnx>=1.17.1",
+    "onnx2torch==1.5.15",
+    "pillow==12.3.0",
+    "pyyaml>=6.0.1",
+    "requests>=2.32.0",
+    "torch==2.13.0",
+    "torch-summary==1.4.5",
+    "torchvision==0.28.0",
+    "transformers>=5.17.0",
+    "wandb",
+]
+
+[dependency-groups]
+dev = [
+    "onnxruntime==1.22.0",
+    "pytest==8.4.0",
+]
