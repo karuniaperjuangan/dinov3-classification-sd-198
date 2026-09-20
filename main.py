@@ -44,8 +44,23 @@ def main(config_path="config.yaml"):
     print(len(ds_train))
     print(len(ds_test))
 
-    train_loader = DataLoader(ds_train, batch_size=config.batch_size, shuffle=True)
-    test_loader = DataLoader(ds_test, batch_size=config.batch_size, shuffle=False)
+    train_loader = DataLoader(
+        ds_train,
+        batch_size=config.batch_size,
+        shuffle=True,
+        num_workers=8,
+        persistent_workers=True,
+        pin_memory=True,
+    )
+
+    test_loader = DataLoader(
+        ds_test,
+        batch_size=config.batch_size,
+        shuffle=False,
+        num_workers=8,
+        persistent_workers=True,
+        pin_memory=True,
+    )
 
     model = DinoV3Classifier(config.model_id, config.num_classes)
     summary(model, (3, 224, 224), depth=4)

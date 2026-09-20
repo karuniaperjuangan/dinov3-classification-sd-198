@@ -1,9 +1,10 @@
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from zipfile import ZipFile
 
 import torch
 from datasets import ClassLabel, Dataset, Features, Image
 from huggingface_hub import hf_hub_download
+from tqdm.auto import tqdm
 from torchvision.transforms import v2 as transforms
 
 
@@ -29,14 +30,21 @@ test_transform = transforms.Compose(
 
 def load_sd198(dataset_id):
     archive = hf_hub_download(dataset_id, "sd-198.zip", repo_type="dataset")
+    extract_dir = Path(archive).parent / "sd-198-extracted"
+    marker = extract_dir / ".complete"
     with ZipFile(archive) as zip_file:
         classes = [line.split(maxsplit=1)[1] for line in zip_file.read("sd-198/classes.txt").decode().splitlines()]
         images = [line.split(maxsplit=1)[1] for line in zip_file.read("sd-198/images.txt").decode().splitlines()]
+        if not marker.exists():
+            for path in tqdm(images, desc="Extracting SD-198", unit="image"):
+                zip_file.extract(f"sd-198/images/{path}", extract_dir)
+            marker.touch()
 
     assert len(classes) == 198 and len(images) == 6584
+    image_dir = extract_dir / "sd-198" / "images"
     return Dataset.from_dict(
         {
-            "image": [f"zip://sd-198/images/{path}::{archive}" for path in images],
+            "image": [str(image_dir / path) for path in images],
             "label": [PurePosixPath(path).parent.name for path in images],
         },
         features=Features({"image": Image(), "label": ClassLabel(names=classes)}),
