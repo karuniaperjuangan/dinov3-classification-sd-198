@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchsummary import summary
+from tqdm.auto import tqdm
 
 from src.config import Config
 from src.data import apply_transform, load_sd198, test_transform, train_transforms
@@ -64,11 +65,17 @@ def main(config_path="config.yaml"):
     )
     early_stopping = EarlyStopping(config.early_stopping_patience, config.early_stopping_min_delta)
 
-    for epoch in range(config.epochs):
+    epoch_progress = tqdm(range(config.epochs), desc="Epochs", position=0)
+    for epoch in epoch_progress:
         train_loss, train_acc = run_one_epoch(model, train_loader, optimizer, loss_fn, device, True)
         val_loss, val_acc = run_one_epoch(model, test_loader, optimizer, loss_fn, device, False)
         scheduler.step()
-        print(f"Epoch {epoch+1}: train_loss={train_loss:.4f}, train_acc={train_acc:.4f}, val_loss={val_loss:.4f}, val_acc={val_acc:.4f}")
+        epoch_progress.set_postfix(
+            train_loss=f"{train_loss:.4f}",
+            train_acc=f"{train_acc:.4f}",
+            val_loss=f"{val_loss:.4f}",
+            val_acc=f"{val_acc:.4f}",
+        )
         if run:
             run.log({"epoch": epoch + 1, "train/loss": train_loss, "train/accuracy": train_acc, "validation/loss": val_loss, "validation/accuracy": val_acc, "learning_rate": scheduler.get_last_lr()[0]})
 
@@ -85,11 +92,11 @@ def main(config_path="config.yaml"):
             torch.save(checkpoint, os.path.join(checkpoint_path, f"checkpoint_{epoch+1}.pth"))
 
         if val_loss < early_stopping.best_loss:
-            print("Validation loss improved. Saving best model...")
+            epoch_progress.write("Validation loss improved. Saving best model...")
             torch.save(checkpoint, os.path.join(checkpoint_path, "checkpoint_best.pth"))
 
         if early_stopping.step(val_loss):
-            print("Early stopping triggered")
+            epoch_progress.write("Early stopping triggered")
             break
 
     save_sample_predictions(

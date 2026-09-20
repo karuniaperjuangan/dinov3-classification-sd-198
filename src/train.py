@@ -1,4 +1,5 @@
 import torch
+from tqdm.auto import tqdm
 
 
 class EarlyStopping:
@@ -24,7 +25,12 @@ def run_one_epoch(model, loader, optimizer, loss_fn, device, is_training):
     num_correct = 0
     num_samples = 0
 
-    for batch in loader:
+    for batch in tqdm(
+        loader,
+        desc="Training" if is_training else "Validation",
+        leave=False,
+        position=1,
+    ):
         images = batch["image"].to(device)
         labels = batch["label"].to(device)
 
